@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barba Zero - Dashboard do Salão</title>
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+    body { background:#f5f5f5; display:flex; justify-content:center; align-items:flex-start; padding:20px; min-height:100vh; }
+    .container { width:100%; max-width:600px; background:#fff; border-radius:15px; box-shadow:0 8px 20px rgba(0,0,0,0.1); padding:30px; margin-top:30px; }
+    h1 { text-align:center; color:#2c3e50; margin-bottom:20px; }
+    .agendamento { display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #ecf0f1; border-radius:8px; margin-bottom:10px; }
+    .agendamento button { padding:10px 15px; border:none; border-radius:8px; cursor:pointer; background-color:#27ae60; color:#fff; transition:0.3s; }
+    .agendamento button:hover { background-color:#2ecc71; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Dashboard do Salão</h1>
+  <div id="agendamentos-container">
+    <!-- Agendamentos gerados pelo JS -->
+  </div>
+</div>
+
+<script>
+  // Som de alerta
+  const alertaSound = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
+
+  // Lista de agendamentos simulados
+  const agendamentos = [
+    { cliente: 'João', celular: '5511999999999', horario: '15:30', enviado: false },
+    { cliente: 'Pedro', celular: '5511988888888', horario: '16:00', enviado: false }
+  ];
+
+  const container = document.getElementById('agendamentos-container');
+
+  // Função para renderizar agendamentos
+  function renderAgendamentos() {
+    container.innerHTML = '';
+    agendamentos.forEach((a, index) => {
+      const div = document.createElement('div');
+      div.classList.add('agendamento');
+
+      const now = new Date();
+      const [h,m] = a.horario.split(':');
+      const horarioAg = new Date();
+      horarioAg.setHours(h);
+      horarioAg.setMinutes(m);
+      horarioAg.setSeconds(0);
+
+      const diffMin = Math.floor((horarioAg - now)/60000);
+
+      div.innerHTML = `
+        <span>${a.cliente} - ${a.horario}</span>
+        <button id="btn-${index}" ${diffMin > 30 ? 'disabled' : ''}>
+          ${a.enviado ? 'Enviado' : 'Enviar lembrete'}
+        </button>
+      `;
+
+      container.appendChild(div);
+
+      const btn = document.getElementById(`btn-${index}`);
+      btn.addEventListener('click', () => {
+        // Mensagem pronta para WhatsApp
+        const msg = `Olá ${a.cliente} 👋\nSeu corte está marcado para ${a.horario}.\nTe esperamos no Barba Zero!`;
+        const url = `https://wa.me/${a.celular}?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+
+        a.enviado = true;
+        renderAgendamentos();
+      });
+    });
+  }
+
+  renderAgendamentos();
+
+  // Função para tocar som e habilitar botão 30 min antes
+  setInterval(() => {
+    const now = new Date();
+    agendamentos.forEach(a => {
+      if (!a.enviado) {
+        const [h,m] = a.horario.split(':');
+        const horarioAg = new Date();
+        horarioAg.setHours(h);
+        horarioAg.setMinutes(m);
+        horarioAg.setSeconds(0);
+
+        const diffMin = Math.floor((horarioAg - now)/60000);
+
+        if (diffMin === 30) {
+          alertaSound.play();
+          renderAgendamentos();
+        }
+      }
+    });
+  }, 60000); // verifica a cada minuto
+</script>
+
+</body>
+  </html>
