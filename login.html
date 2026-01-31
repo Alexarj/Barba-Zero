@@ -26,15 +26,26 @@ button:hover{background:#ddd;}
 </div>
 <script>
 let assinaturaAtiva = false; // Salão precisa pagar para acessar
+
 document.getElementById('btnLogin').addEventListener('click', ()=>{
     const tipo = document.getElementById('tipoLogin').value;
     const email = document.getElementById('emailLogin').value.trim();
     const senha = document.getElementById('senhaLogin').value.trim();
-    if(tipo==='cliente' && email){window.location.href='cliente.html';}
+
+    if(tipo==='cliente' && email){
+        window.location.href='cliente.html';
+    }
     else if(tipo==='salao' && email && senha){
-        if(!assinaturaAtiva){alert('Assinatura não confirmada. Redirecionando para pagamento.');window.location.href='pagamento-salao.html'; return;}
+        if(!assinaturaAtiva){
+            alert('Assinatura não confirmada. Redirecionando para pagamento.');
+            window.location.href='pagamento-salao.html';
+            return;
+        }
         window.location.href='dashboard-salao.html';
-    } else{alert('Preencha todos os campos corretamente.');}
+    }
+    else{
+        alert('Preencha todos os campos corretamente.');
+    }
 });
 </script>
 </body>
