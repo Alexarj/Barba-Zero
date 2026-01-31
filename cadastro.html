@@ -29,9 +29,17 @@ document.getElementById('btnCadastrar').addEventListener('click', ()=>{
     const tipo = document.getElementById('tipoCadastro').value;
     const email = document.getElementById('emailCadastro').value.trim();
     const senha = document.getElementById('senhaCadastro').value.trim();
-    if(tipo==='cliente' && email){alert(`Cliente cadastrado: ${email}`);window.location.href='cliente.html';}
-    else if(tipo==='salao' && email && senha){alert(`Salão cadastrado: ${email}`);window.location.href='dashboard-salao.html';}
-    else{alert('Preencha todos os campos corretamente.');}
+    if(tipo==='cliente' && email){
+        alert(`Cliente cadastrado: ${email}`);
+        window.location.href='cliente.html';
+    }
+    else if(tipo==='salao' && email && senha){
+        alert(`Salão cadastrado: ${email}`);
+        window.location.href='dashboard-salao.html';
+    }
+    else{
+        alert('Preencha todos os campos corretamente.');
+    }
 });
 </script>
 </body>
