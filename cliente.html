@@ -1,70 +1,200 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Cliente | Barba Zero</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel do Cliente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: #00c853;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.cancelar {
+      background: #ff5252;
+      color: #fff;
+    }
+    .box {
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .status {
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    .pendente { color: #ffeb3b; }
+    .confirmado { color: #00e676; }
+    .recusado { color: #ff5252; }
+  </style>
 </head>
+
 <body>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+<h2>Área do Cliente</h2>
+
+<div class="box">
+  <input id="email" placeholder="Seu email" />
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div id="painel" style="display:none">
+
+  <div class="box">
+    <h3>Seus dados</h3>
+    <input id="nome" placeholder="Seu nome" />
+    <input id="whatsapp" placeholder="WhatsApp" />
+    <button onclick="salvarDados()">Salvar dados</button>
+  </div>
+
+  <div class="box">
+    <h3>Agendar horário</h3>
+    <input type="datetime-local" id="horario" />
+    <button onclick="agendar()">Agendar (Pix R$ 5,00)</button>
+  </div>
+
+  <div class="box">
+    <h3>Seu agendamento</h3>
+    <div id="agendamento"></div>
+  </div>
+
+</div>
 
 <script>
-  async function protegerCliente() {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
-      window.location.href = "login.html";
-      return;
-    }
+const supabase = window.supabase.createClient(
+  "https://SEU_PROJETO.supabase.co",
+  "SUA_CHAVE_PUBLICA"
+);
 
-    const userId = data.session.user.id;
+let cliente = null;
+let agendamentoAtual = null;
 
-    const { data: cliente } = await supabase
+async function login() {
+  const email = document.getElementById("email").value;
+  if (!email) return alert("Informe o email");
+
+  let { data } = await supabase
+    .from("clientes")
+    .select("*")
+    .eq("email", email)
+    .single();
+
+  if (!data) {
+    const res = await supabase
       .from("clientes")
-      .select("id")
-      .eq("auth_uid", userId)
-      .maybeSingle();
-
-    if (!cliente) {
-      window.location.href = "dashboard-salao.html";
-    }
+      .insert({ email })
+      .select()
+      .single();
+    cliente = res.data;
+  } else {
+    cliente = data;
   }
 
-  protegerCliente();
-</script>
+  document.getElementById("painel").style.display = "block";
+  document.getElementById("nome").value = cliente.nome || "";
+  document.getElementById("whatsapp").value = cliente.whatsapp || "";
 
-<h2>Meus Agendamentos</h2>
-<button onclick="logout()">Sair</button>
+  carregarAgendamento();
+}
 
-<ul id="lista"></ul>
+async function salvarDados() {
+  await supabase.from("clientes").update({
+    nome: document.getElementById("nome").value,
+    whatsapp: document.getElementById("whatsapp").value
+  }).eq("id", cliente.id);
 
-<script>
-async function carregarAgendamentos() {
-  const { data } = await supabase
-    .from("view_agendamentos_cliente")
-    .select("*");
+  alert("Dados salvos");
+}
 
-  const ul = document.getElementById("lista");
-  ul.innerHTML = "";
+async function agendar() {
+  const horario = document.getElementById("horario").value;
+  if (!horario) return alert("Escolha o horário");
 
-  data?.forEach(a => {
-    ul.innerHTML += `
-      <li>
-        ${new Date(a.horario).toLocaleString()} -
-        ${a.salao_nome} (${a.status})
-      </li>
-    `;
+  await supabase.from("agendamentos").insert({
+    cliente_id: cliente.id,
+    horario,
+    valor: 5,
+    status: "pendente"
   });
+
+  alert(
+    "Agendamento pendente.\n\nFaça o Pix de R$5,00 para o salão e envie o comprovante no painel do salão."
+  );
+
+  carregarAgendamento();
 }
 
-async function logout() {
-  await supabase.auth.signOut();
-  window.location.href = "login.html";
+async function carregarAgendamento() {
+  const { data } = await supabase
+    .from("agendamentos")
+    .select("*")
+    .eq("cliente_id", cliente.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!data) return;
+
+  agendamentoAtual = data;
+
+  let statusClass = data.status;
+  let html = `
+    <p><b>Horário:</b> ${new Date(data.horario).toLocaleString()}</p>
+    <p class="status ${statusClass}">Status: ${data.status.toUpperCase()}</p>
+  `;
+
+  if (data.status === "pendente") {
+    html += `<p>Aguardando validação do Pix pelo salão</p>`;
+  }
+
+  if (data.status === "confirmado") {
+    html += `<button class="cancelar" onclick="cancelar()">Cancelar</button>`;
+  }
+
+  document.getElementById("agendamento").innerHTML = html;
 }
 
-carregarAgendamentos();
+async function cancelar() {
+  const horario = new Date(agendamentoAtual.horario);
+  const agora = new Date();
+
+  const diff = (horario - agora) / 60000;
+  if (diff < 30) {
+    return alert("Cancelamento permitido apenas até 30 minutos antes");
+  }
+
+  await supabase.from("agendamentos")
+    .update({ status: "cancelado" })
+    .eq("id", agendamentoAtual.id);
+
+  alert("Agendamento cancelado");
+  carregarAgendamento();
+}
 </script>
 
 </body>
-</html>
+  </html>
