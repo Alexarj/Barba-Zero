@@ -1,90 +1,154 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Barbazero</title>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <title>BarbaZero • Login</title>
 
-<style>
-body {
-  font-family: Arial;
-  background:#111;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.box {
-  background:#1e1e1e;
-  padding:25px;
-  border-radius:8px;
-  width:320px;
-  margin:10px;
-}
-input, button {
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border:none;
-  border-radius:4px;
-}
-button {
-  background:#c59d5f;
-  font-weight:bold;
-  cursor:pointer;
-}
-hr { margin:20px 0; border:1px solid #333; }
-</style>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #1c1c1c;
+      padding: 25px;
+      width: 320px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,.5);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #e63946;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      opacity: .9;
+    }
+
+    .divider {
+      margin: 20px 0;
+      border-top: 1px solid #333;
+    }
+
+    small {
+      color: #aaa;
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="box">
-  <h3>Salão</h3>
-  <input id="emailSalao" placeholder="Email do salão">
-  <input id="senhaSalao" type="password" placeholder="Senha">
-  <button onclick="loginSalao()">Entrar / Cadastrar</button>
+  <div class="box">
+    <h2>💈 Área do Salão</h2>
 
-  <hr>
+    <input type="email" id="salaoEmail" placeholder="Email do salão" />
+    <input type="password" id="salaoSenha" placeholder="Senha" />
 
-  <h3>Cliente</h3>
-  <input id="emailCliente" placeholder="Seu email">
-  <button onclick="entrarCliente()">Entrar</button>
-</div>
+    <button onclick="loginSalao()">Entrar</button>
+    <button onclick="cadastroSalao()">Cadastrar Salão</button>
+
+    <div class="divider"></div>
+
+    <h2>👤 Cliente</h2>
+
+    <input type="email" id="clienteEmail" placeholder="Seu email" />
+    <button onclick="entrarCliente()">Entrar como Cliente</button>
+
+    <small>
+      Cliente não precisa senha<br>
+      Pagamento só ao agendar
+    </small>
+  </div>
 
 <script>
-const supabase = supabase.createClient(
-  "https://ujarxofdtmcjulqutpfd.supabase.co",
-  "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
-);
+  // 🔑 SUPABASE
+  const SUPABASE_URL = "https://ujarxofdtmcjulqutpfd.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8";
 
-// SALÃO
-async function loginSalao() {
-  const email = emailSalao.value;
-  const password = senhaSalao.value;
+  const supabase = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-  let { error } = await supabase.auth.signInWithPassword({ email, password });
+  // 🔐 LOGIN SALÃO
+  async function loginSalao() {
+    const email = document.getElementById("salaoEmail").value;
+    const senha = document.getElementById("salaoSenha").value;
 
-  if (!error) {
-    location.href = "dashboard-salao.html";
-    return;
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha
+    });
+
+    if (error) {
+      alert("Erro ao entrar: " + error.message);
+      return;
+    }
+
+    window.location.href = "dashboard-salao.html";
   }
 
-  const { error: cadastroErro } = await supabase.auth.signUp({ email, password });
+  // 📝 CADASTRO SALÃO
+  async function cadastroSalao() {
+    const email = document.getElementById("salaoEmail").value;
+    const senha = document.getElementById("salaoSenha").value;
 
-  if (cadastroErro) alert(cadastroErro.message);
-  else alert("Salão cadastrado! Faça login.");
-}
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: senha
+    });
 
-// CLIENTE
-function entrarCliente() {
-  const email = emailCliente.value;
-  if (!email) return alert("Informe seu email");
+    if (error) {
+      alert("Erro no cadastro: " + error.message);
+      return;
+    }
 
-  localStorage.setItem("cliente_email", email);
-  location.href = "cliente.html";
-}
+    alert("Salão cadastrado com sucesso. Faça login.");
+  }
+
+  // 👤 ENTRADA CLIENTE (SEM SENHA)
+  async function entrarCliente() {
+    const email = document.getElementById("clienteEmail").value;
+
+    if (!email) {
+      alert("Informe seu email");
+      return;
+    }
+
+    localStorage.setItem("cliente_email", email);
+    window.location.href = "cliente.html";
+  }
 </script>
 
 </body>
