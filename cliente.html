@@ -1,173 +1,104 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard Cliente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
-    header { padding: 20px; background: #222; display: flex; justify-content: space-between; align-items: center; }
-    h1 { margin: 0; }
-    main { padding: 20px; }
-    input, select, button { padding: 8px; margin: 5px 0; border-radius: 4px; border: none; }
-    button { cursor: pointer; background: #2563eb; color: #fff; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #444; text-align: left; }
-    .cancelar { background: #dc2626; }
-    .pago { background: #16a34a; color: #fff; padding: 5px; border-radius: 4px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Cliente - Barba Zero</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #000;
+        color: #fff;
+    }
+    header {
+        padding: 20px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .container {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    input {
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: none;
+        width: 250px;
+    }
+    button {
+        padding: 15px 30px;
+        font-size: 18px;
+        border: none;
+        cursor: pointer;
+        background-color: #fff;
+        color: #000;
+        font-weight: bold;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+    button:hover {
+        background-color: #ddd;
+    }
+    .agendamentos {
+        margin-top: 20px;
+        width: 90%;
+        max-width: 600px;
+    }
+    .agendamento {
+        background-color: #111;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+</style>
 </head>
 <body>
 
-<header>
-  <h1>Dashboard Cliente</h1>
-  <button onclick="logout()">Sair</button>
-</header>
+<header>Painel Cliente</header>
 
-<main>
-  <h2>Seus Dados</h2>
-  <form id="formDados">
-    <input type="text" id="nome" placeholder="Nome" required />
-    <input type="text" id="telefone" placeholder="Telefone/WhatsApp" required />
-    <button type="submit">Atualizar</button>
-  </form>
+<div class="container">
+    <input type="text" id="nomeCliente" placeholder="Nome">
+    <input type="text" id="telefoneCliente" placeholder="Telefone / WhatsApp">
+    <button id="btnAtualizar">Atualizar Dados</button>
 
-  <h2>Agendar Horário</h2>
-  <form id="formAgendamento">
-    <label for="salao">Escolher Salão:</label>
-    <select id="salao" required></select>
-    <input type="datetime-local" id="horario" required />
-    <button type="submit">Agendar (R$5 adiantado)</button>
-  </form>
+    <h3>Agendar Horário</h3>
+    <input type="datetime-local" id="horarioAgendamento">
+    <button id="btnAgendar">Agendar</button>
 
-  <h2>Seus Agendamentos</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Salão</th>
-        <th>Horário</th>
-        <th>Status</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaAgendamentos"></tbody>
-  </table>
-</main>
+    <div class="agendamentos" id="listaAgendamentos">
+        <!-- Lista de agendamentos -->
+    </div>
+</div>
 
 <script>
-  const supabase = supabase.createClient(
-    "https://ujarxofdtmcjulqutpfd.supabase.co",
-    "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
-  );
+const listaAgendamentos = document.getElementById('listaAgendamentos');
+const btnAgendar = document.getElementById('btnAgendar');
+const btnAtualizar = document.getElementById('btnAtualizar');
 
-  let clienteId;
-
-  async function init() {
-    const user = supabase.auth.getUser();
-    const { data: userData } = await user;
-    if (!userData) {
-      window.location.href = "index.html";
-      return;
-    }
-
-    // Verifica se cliente já existe
-    const { data: cliente } = await supabase
-      .from("clientes")
-      .select("*")
-      .eq("email", userData.user.email)
-      .single();
-
-    if (!cliente) {
-      const { data } = await supabase.from("clientes").insert({ email: userData.user.email }).select().single();
-      clienteId = data.id;
+btnAgendar.addEventListener('click', () => {
+    const horario = document.getElementById('horarioAgendamento').value;
+    if(horario){
+        const div = document.createElement('div');
+        div.className = 'agendamento';
+        div.textContent = `Agendamento marcado para: ${horario}`;
+        listaAgendamentos.appendChild(div);
+        alert('Agendamento realizado com sucesso! (Pix 5 reais ainda pendente)');
     } else {
-      clienteId = cliente.id;
-      document.getElementById("nome").value = cliente.nome || "";
-      document.getElementById("telefone").value = cliente.telefone || "";
+        alert('Selecione um horário.');
     }
+});
 
-    carregarSaloes();
-    carregarAgendamentos();
-  }
-
-  async function carregarSaloes() {
-    const { data: saloes } = await supabase.from("saloes").select("id, nome");
-    const select = document.getElementById("salao");
-    select.innerHTML = "";
-    saloes.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s.id;
-      opt.textContent = s.nome;
-      select.appendChild(opt);
-    });
-  }
-
-  async function carregarAgendamentos() {
-    const { data: agendamentos } = await supabase
-      .from("agendamentos")
-      .select("id, salao_id, horario, pago, finalizado, saloes(nome)")
-      .eq("cliente_id", clienteId)
-      .order("horario", { ascending: true });
-
-    const tbody = document.getElementById("tabelaAgendamentos");
-    tbody.innerHTML = "";
-
-    agendamentos.forEach(a => {
-      const status = a.finalizado ? "Finalizado" : a.pago ? "Pago" : "Agendado";
-      const btnCancelar = !a.finalizado && (new Date(a.horario) - new Date() > 30*60*1000)
-        ? `<button class="cancelar" onclick="cancelar('${a.id}')">Cancelar</button>`
-        : "";
-      const nomeSalao = a.saloes ? a.saloes.nome : "";
-      tbody.innerHTML += `
-        <tr>
-          <td>${nomeSalao}</td>
-          <td>${new Date(a.horario).toLocaleString()}</td>
-          <td>${status}</td>
-          <td>${btnCancelar}</td>
-        </tr>
-      `;
-    });
-  }
-
-  document.getElementById("formDados").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const nome = document.getElementById("nome").value;
-    const telefone = document.getElementById("telefone").value;
-
-    await supabase.from("clientes").update({ nome, telefone }).eq("id", clienteId);
-    alert("Dados atualizados!");
-  });
-
-  document.getElementById("formAgendamento").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const salaoId = document.getElementById("salao").value;
-    const horario = document.getElementById("horario").value;
-
-    await supabase.from("agendamentos").insert({
-      cliente_id: clienteId,
-      salao_id: salaoId,
-      horario,
-      pago: false,
-      finalizado: false
-    });
-
-    alert("Agendamento criado! Faça o pagamento adiantado via Pix para o salão (R$5).");
-    carregarAgendamentos();
-  });
-
-  async function cancelar(id) {
-    if (!confirm("Deseja realmente cancelar este agendamento?")) return;
-    await supabase.from("agendamentos").delete().eq("id", id);
-    carregarAgendamentos();
-  }
-
-  function logout() {
-    supabase.auth.signOut();
-    window.location.href = "index.html";
-  }
-
-  init();
+btnAtualizar.addEventListener('click', () => {
+    const nome = document.getElementById('nomeCliente').value;
+    const telefone = document.getElementById('telefoneCliente').value;
+    alert(`Dados atualizados:\nNome: ${nome}\nTelefone: ${telefone}`);
+});
 </script>
 
 </body>
