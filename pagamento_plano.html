@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pagamento Plano Salão</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; display:flex; justify-content:center; align-items:center; height:100vh; }
+    main { background:#222; padding:20px; border-radius:8px; width: 300px; }
+    h1, h2 { text-align:center; }
+    input, button { width: 100%; padding:8px; margin:5px 0; border-radius:4px; border:none; }
+    button { cursor:pointer; background:#2563eb; color:#fff; }
+    .alert { background:#16a34a; padding:10px; margin:10px 0; text-align:center; border-radius:4px; }
+    .info { background:#2563eb; }
+    .disabled { opacity:0.5; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+
+<main>
+  <h1>Pagamento do Plano</h1>
+  <p>Para ativar seu plano mensal de <strong>R$29,90</strong>, faça o Pix para:</p>
+  <p><strong>Chave Pix:</strong> fcmggo@gmail.com</p>
+  <p><strong>Nome:</strong> Alex Oliveira de Araújo</p>
+
+  <h2>Upload do Comprovante</h2>
+  <input type="file" id="comprovante" accept="image/*,application/pdf" />
+  <button id="enviarBtn">Enviar Comprovante</button>
+
+  <div class="alert info" id="msgInfo">
+    Após envio, seu plano será ativado em até <strong>2 horas</strong> após conferência do admin.
+  </div>
+</main>
+
+<script>
+  const supabase = supabase.createClient(
+    "https://ujarxofdtmcjulqutpfd.supabase.co",
+    "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
+  );
+
+  let salaoId;
+  async function init() {
+    const user = supabase.auth.getUser();
+    const { data: userData } = await user;
+    if (!userData) {
+      window.location.href = "index.html";
+      return;
+    }
+    salaoId = userData.user.id;
+
+    // Verificar plano ativo → redireciona se já ativo
+    const { data: salao } = await supabase.from("saloes").select("plano_ativo, plano_fim").eq("id", salaoId).single();
+    const hoje = new Date();
+    if (salao.plano_ativo && new Date(salao.plano_fim) > hoje) {
+      window.location.href = "dashboard-salao.html";
+    }
+  }
+
+  document.getElementById("enviarBtn").addEventListener("click", async () => {
+    const file = document.getElementById("comprovante").files[0];
+    if (!file) return alert("Selecione um arquivo.");
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `comprovantes/${salaoId}.${fileExt}`;
+
+    // Upload para Supabase Storage
+    const { data, error } = await supabase.storage.from("comprovantes").upload(filePath, file, { upsert: true });
+    if (error) return alert("Erro ao enviar: " + error.message);
+
+    // Atualiza a tabela saloes com link do comprovante
+    const url = supabase.storage.from("comprovantes").getPublicUrl(filePath).data.publicUrl;
+    await supabase.from("saloes").update({ comprovante_url: url }).eq("id", salaoId);
+
+    // Bloqueia botão
+    const btn = document.getElementById("enviarBtn");
+    btn.classList.add("disabled");
+    btn.disabled = true;
+
+    alert("Comprovante enviado! Seu plano será ativado em até 2 horas após conferência do admin.");
+  });
+
+  init();
+</script>
+
+</body>
+  </html>
