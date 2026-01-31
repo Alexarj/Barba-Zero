@@ -30,6 +30,7 @@ button:hover{background-color:#ddd;}
 const listaAgendamentos=document.getElementById('listaAgendamentos');
 const btnAgendar=document.getElementById('btnAgendar');
 const btnAtualizar=document.getElementById('btnAtualizar');
+
 btnAgendar.addEventListener('click',()=>{
     const horario=document.getElementById('horarioAgendamento').value;
     if(horario){
@@ -40,6 +41,7 @@ btnAgendar.addEventListener('click',()=>{
         alert('Agendamento realizado com sucesso! (Pix 5 reais ainda pendente)');
     }else{alert('Selecione um horário.');}
 });
+
 btnAtualizar.addEventListener('click',()=>{
     const nome=document.getElementById('nomeCliente').value;
     const telefone=document.getElementById('telefoneCliente').value;
