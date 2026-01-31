@@ -5,88 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Salão - Barba Zero</title>
 <style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #000;
-        color: #fff;
-    }
-    header {
-        padding: 20px;
-        text-align: center;
-        font-size: 28px;
-        font-weight: bold;
-    }
-    .container {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        align-items: center;
-    }
-    button {
-        padding: 12px 25px;
-        font-size: 16px;
-        border: none;
-        cursor: pointer;
-        background-color: #fff;
-        color: #000;
-        font-weight: bold;
-        border-radius: 5px;
-        transition: 0.3s;
-    }
-    button:hover {
-        background-color: #ddd;
-    }
-    .agendamentos {
-        width: 90%;
-        max-width: 600px;
-    }
-    .agendamento {
-        background-color: #111;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+body{margin:0;font-family:Arial,sans-serif;background:#000;color:#fff;}
+header{padding:20px;text-align:center;font-size:28px;font-weight:bold;}
+.container{padding:20px;display:flex;flex-direction:column;gap:20px;align-items:center;}
+button{padding:12px 25px;font-size:16px;border:none;cursor:pointer;background:#fff;color:#000;font-weight:bold;border-radius:5px;transition:.3s;}
+button:hover{background-color:#ddd;}
+.agendamentos{width:90%;max-width:600px;}
+.agendamento{background-color:#111;padding:15px;border-radius:5px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
 </style>
 </head>
 <body>
-
 <header>Dashboard Salão</header>
-
 <div class="container">
     <h3>Agendamentos</h3>
-    <div class="agendamentos" id="listaAgendamentos">
-        <!-- Lista de agendamentos -->
-    </div>
+    <div class="agendamentos" id="listaAgendamentos"></div>
 </div>
-
 <script>
-const listaAgendamentos = document.getElementById('listaAgendamentos');
-
-// Exemplo de agendamentos pendentes
-const agendamentos = [
-    {cliente: 'João', horario: '2026-02-01 10:00', status: 'pendente'},
-    {cliente: 'Maria', horario: '2026-02-01 11:00', status: 'pendente'}
-];
-
-agendamentos.forEach(a => {
-    const div = document.createElement('div');
-    div.className = 'agendamento';
-    div.innerHTML = `<span>${a.cliente} - ${a.horario}</span>
-                     <button onclick="marcarFinalizado(this)">Finalizar</button>`;
+const listaAgendamentos=document.getElementById('listaAgendamentos');
+const agendamentos=[{cliente:'João',horario:'2026-02-01 10:00',status:'pendente'},{cliente:'Maria',horario:'2026-02-01 11:00',status:'pendente'}];
+agendamentos.forEach(a=>{
+    const div=document.createElement('div');
+    div.className='agendamento';
+    div.innerHTML=`<span>${a.cliente} - ${a.horario}</span><button onclick="marcarFinalizado(this)">Finalizar</button>`;
     listaAgendamentos.appendChild(div);
 });
-
 function marcarFinalizado(btn){
-    btn.parentElement.querySelector('span').textContent += ' - Finalizado';
-    btn.disabled = true;
+    btn.parentElement.querySelector('span').textContent+=' - Finalizado';
+    btn.disabled=true;
     alert('Agendamento marcado como finalizado.');
 }
 </script>
-
 </body>
 </html>
