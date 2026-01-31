@@ -1,188 +1,70 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barba Zero - Cliente</title>
-
-  <!-- CSS interno -->
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 500px;
-      background: #fff;
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      padding: 30px;
-      margin-top: 30px;
-    }
-
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: #34495e;
-      font-weight: 500;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      border: 1px solid #bdc3c7;
-      font-size: 1rem;
-    }
-
-    button {
-      width: 100%;
-      padding: 15px;
-      background-color: #27ae60;
-      color: #fff;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #2ecc71;
-    }
-
-    .salons-list {
-      margin-top: 30px;
-    }
-
-    .salon-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px;
-      border: 1px solid #ecf0f1;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      align-items: center;
-    }
-
-    .salon-item span.status {
-      font-weight: bold;
-      padding: 5px 10px;
-      border-radius: 5px;
-      color: #fff;
-    }
-
-    .status.aberto {
-      background-color: #27ae60;
-    }
-
-    .status.fechado {
-      background-color: #c0392b;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Cliente | Barba Zero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-  <div class="container">
-    <h1>Agende seu Corte</h1>
 
-    <form id="agendamento-form">
-      <label for="nome">Nome</label>
-      <input type="text" id="nome" placeholder="Seu nome" required>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
 
-      <label for="celular">Celular (WhatsApp)</label>
-      <input type="text" id="celular" placeholder="Ex: 11999999999" required>
-
-      <label for="horario">Horário desejado</label>
-      <input type="time" id="horario" required>
-      
-      <label for="salao">Escolha um salão</label>
-      <select id="salao" required>
-        <!-- Opções preenchidas pelo JS -->
-      </select>
-
-      <button type="submit">Agendar Horário</button>
-    </form>
-
-    <div class="salons-list">
-      <h2>Salões Disponíveis</h2>
-      <div id="salons-container">
-        <!-- Lista de salões e status será gerada aqui -->
-      </div>
-    </div>
-  </div>
-
-  <!-- JS interno -->
-  <script>
-    // Lista de salões simulados (pode vir do banco depois)
-    const saloes = [
-      { nome: 'Barba do Zé', status: 'aberto' },
-      { nome: 'Corte Perfeito', status: 'fechado' },
-      { nome: 'Estilo & Barba', status: 'aberto' }
-    ];
-
-    const selectSalao = document.getElementById('salao');
-    const salonsContainer = document.getElementById('salons-container');
-
-    // Preencher select de salões
-    saloes.forEach(s => {
-      const option = document.createElement('option');
-      option.value = s.nome;
-      option.textContent = s.nome;
-      selectSalao.appendChild(option);
-    });
-
-    // Preencher lista de salões com status
-    function renderSalons() {
-      salonsContainer.innerHTML = '';
-      saloes.forEach(s => {
-        const div = document.createElement('div');
-        div.classList.add('salon-item');
-        div.innerHTML = `
-          <span>${s.nome}</span>
-          <span class="status ${s.status}">${s.status.toUpperCase()}</span>
-        `;
-        salonsContainer.appendChild(div);
-      });
+<script>
+  async function protegerCliente() {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      window.location.href = "login.html";
+      return;
     }
 
-    renderSalons();
+    const userId = data.session.user.id;
 
-    // Lógica do agendamento
-    const form = document.getElementById('agendamento-form');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+    const { data: cliente } = await supabase
+      .from("clientes")
+      .select("id")
+      .eq("auth_uid", userId)
+      .maybeSingle();
 
-      const nome = document.getElementById('nome').value;
-      const celular = document.getElementById('celular').value;
-      const horario = document.getElementById('horario').value;
-      const salao = document.getElementById('salao').value;
+    if (!cliente) {
+      window.location.href = "dashboard-salao.html";
+    }
+  }
 
-      alert(`✅ Agendamento feito!\nCliente: ${nome}\nWhatsApp: ${celular}\nHorário: ${horario}\nSalão: ${salao}`);
+  protegerCliente();
+</script>
 
-      // Aqui depois entra lógica do WhatsApp semi-automático
-      // e salvar dados no Supabase ou outro banco
-      form.reset();
-    });
-  </script>
+<h2>Meus Agendamentos</h2>
+<button onclick="logout()">Sair</button>
+
+<ul id="lista"></ul>
+
+<script>
+async function carregarAgendamentos() {
+  const { data } = await supabase
+    .from("view_agendamentos_cliente")
+    .select("*");
+
+  const ul = document.getElementById("lista");
+  ul.innerHTML = "";
+
+  data?.forEach(a => {
+    ul.innerHTML += `
+      <li>
+        ${new Date(a.horario).toLocaleString()} -
+        ${a.salao_nome} (${a.status})
+      </li>
+    `;
+  });
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "login.html";
+}
+
+carregarAgendamentos();
+</script>
+
 </body>
-  </html>
+</html>
