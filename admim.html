@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
+    header { padding: 20px; background: #222; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; }
+    main { padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #444; text-align: left; }
+    button { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; background: #2563eb; color: #fff; margin-right: 5px; }
+    .confirmar { background: #16a34a; }
+    .recusar { background: #dc2626; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Painel do Admin</h1>
+  <button onclick="logout()">Sair</button>
+</header>
+
+<main>
+  <h2>Login Admin</h2>
+  <div id="loginAdminDiv">
+    <form id="loginAdmin">
+      <input type="email" id="emailAdmin" placeholder="Email" required />
+      <input type="password" id="senhaAdmin" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <div id="adminPanel" style="display:none;">
+    <h2>Salões Cadastrados</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Salão</th>
+          <th>Email</th>
+          <th>Plano</th>
+          <th>Dias Restantes</th>
+          <th>Comprovante</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaSaloes"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  const supabase = supabase.createClient(
+    "https://ujarxofdtmcjulqutpfd.supabase.co",
+    "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
+  );
+
+  let adminId = null;
+
+  // LOGIN ADMIN
+  document.getElementById("loginAdmin").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("emailAdmin").value;
+    const senha = document.getElementById("senhaAdmin").value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) return alert(error.message);
+
+    adminId = data.user.id;
+    document.getElementById("loginAdminDiv").style.display = "none";
+    document.getElementById("adminPanel").style.display = "block";
+    carregarSaloes();
+  });
+
+  async function carregarSaloes() {
+    const { data: saloes } = await supabase
+      .from("saloes")
+      .select("id, nome, email, plano_ativo, plano_fim, comprovante_url")
+      .order("nome");
+
+    const tbody = document.getElementById("tabelaSaloes");
+    tbody.innerHTML = "";
+
+    saloes.forEach(s => {
+      const hoje = new Date();
+      const diasRestantes = s.plano_fim ? Math.max(0, Math.ceil((new Date(s.plano_fim) - hoje)/(1000*60*60*24))) : 0;
+      const plano = s.plano_ativo ? "Ativo" : "Pendente";
+
+      const btns = s.comprovante_url ? 
+        `<button class="confirmar" onclick="confirmarPlano('${s.id}')">Confirmar</button>
+         <button class="recusar" onclick="recusarPlano('${s.id}')">Recusar</button>` 
+        : "";
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${s.nome}</td>
+          <td>${s.email}</td>
+          <td>${plano}</td>
+          <td>${diasRestantes}</td>
+          <td>${s.comprovante_url ? `<a href="${s.comprovante_url}" target="_blank">Ver</a>` : "Nenhum"}</td>
+          <td>${btns}</td>
+        </tr>
+      `;
+    });
+  }
+
+  async function confirmarPlano(salaoId) {
+    const hoje = new Date();
+    const fimPlano = new Date();
+    fimPlano.setDate(hoje.getDate() + 30); // 30 dias
+    await supabase.from("saloes").update({ plano_ativo: true, plano_fim: fimPlano.toISOString(), comprovante_url: null }).eq("id", salaoId);
+    alert("Plano confirmado!");
+    carregarSaloes();
+  }
+
+  async function recusarPlano(salaoId) {
+    await supabase.from("saloes").update({ plano_ativo: false, comprovante_url: null }).eq("id", salaoId);
+    alert("Plano recusado!");
+    carregarSaloes();
+  }
+
+  function logout() {
+    supabase.auth.signOut();
+    location.reload();
+  }
+</script>
+
+</body>
+</html>
