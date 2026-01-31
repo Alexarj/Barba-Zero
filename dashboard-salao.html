@@ -1,124 +1,91 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard Salão</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
-    header { padding: 20px; background: #222; display: flex; justify-content: space-between; align-items: center; }
-    h1 { margin: 0; }
-    main { padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #444; text-align: left; }
-    button { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; background: #2563eb; color: #fff; }
-    .finalizado { background: #16a34a; }
-    .pendente { background: #dc2626; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Salão - Barba Zero</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #000;
+        color: #fff;
+    }
+    header {
+        padding: 20px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .container {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    button {
+        padding: 12px 25px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        background-color: #fff;
+        color: #000;
+        font-weight: bold;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+    button:hover {
+        background-color: #ddd;
+    }
+    .agendamentos {
+        width: 90%;
+        max-width: 600px;
+    }
+    .agendamento {
+        background-color: #111;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
 </head>
 <body>
 
-<header>
-  <h1>Dashboard do Salão</h1>
-  <button onclick="logout()">Sair</button>
-</header>
+<header>Dashboard Salão</header>
 
-<main>
-  <h2>Agendamentos</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>WhatsApp</th>
-        <th>Horário</th>
-        <th>Status Pagamento</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaAgendamentos">
-      <!-- Preenchido via JS -->
-    </tbody>
-  </table>
-</main>
+<div class="container">
+    <h3>Agendamentos</h3>
+    <div class="agendamentos" id="listaAgendamentos">
+        <!-- Lista de agendamentos -->
+    </div>
+</div>
 
 <script>
-  const supabase = supabase.createClient(
-    "https://ujarxofdtmcjulqutpfd.supabase.co",
-    "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
-  );
+const listaAgendamentos = document.getElementById('listaAgendamentos');
 
-  let salaoId;
+// Exemplo de agendamentos pendentes
+const agendamentos = [
+    {cliente: 'João', horario: '2026-02-01 10:00', status: 'pendente'},
+    {cliente: 'Maria', horario: '2026-02-01 11:00', status: 'pendente'}
+];
 
-  async function init() {
-    // Pega usuário logado
-    const user = supabase.auth.getUser();
-    const { data: userData } = await user;
-    if (!userData) {
-      window.location.href = "index.html";
-      return;
-    }
-    salaoId = userData.user.id;
+agendamentos.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'agendamento';
+    div.innerHTML = `<span>${a.cliente} - ${a.horario}</span>
+                     <button onclick="marcarFinalizado(this)">Finalizar</button>`;
+    listaAgendamentos.appendChild(div);
+});
 
-    // Verificar plano ativo
-    const { data: salao } = await supabase
-      .from("saloes")
-      .select("plano_ativo, plano_fim")
-      .eq("id", salaoId)
-      .single();
-
-    const hoje = new Date();
-    if (!salao.plano_ativo || new Date(salao.plano_fim) < hoje) {
-      // Plano inativo → redireciona para pagamento
-      window.location.href = "pagamento_plano.html";
-      return;
-    }
-
-    carregarAgendamentos();
-  }
-
-  async function carregarAgendamentos() {
-    const { data: agendamentos } = await supabase
-      .from("agendamentos")
-      .select("id, cliente_nome, cliente_whatsapp, horario, pago, finalizado")
-      .eq("salao_id", salaoId)
-      .order("horario", { ascending: true });
-
-    const tbody = document.getElementById("tabelaAgendamentos");
-    tbody.innerHTML = "";
-
-    agendamentos.forEach(a => {
-      const tr = document.createElement("tr");
-
-      const status = a.finalizado ? "Finalizado" : a.pago ? "Pago" : "Agendado";
-      const statusClass = a.finalizado ? "finalizado" : a.pago ? "" : "pendente";
-
-      tr.innerHTML = `
-        <td>${a.cliente_nome}</td>
-        <td>${a.cliente_whatsapp}</td>
-        <td>${new Date(a.horario).toLocaleString()}</td>
-        <td class="${statusClass}">${status}</td>
-        <td>${!a.finalizado ? `<button onclick="finalizarAgendamento('${a.id}')">Finalizar</button>` : ""}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  async function finalizarAgendamento(id) {
-    await supabase
-      .from("agendamentos")
-      .update({ finalizado: true })
-      .eq("id", id);
-
-    carregarAgendamentos();
-  }
-
-  function logout() {
-    supabase.auth.signOut();
-    window.location.href = "index.html";
-  }
-
-  init();
+function marcarFinalizado(btn){
+    btn.parentElement.querySelector('span').textContent += ' - Finalizado';
+    btn.disabled = true;
+    alert('Agendamento marcado como finalizado.');
+}
 </script>
 
 </body>
