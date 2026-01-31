@@ -1,150 +1,68 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Plataforma Salão</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barba Zero</title>
+<style>
     body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #000;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
     }
-    h1 { margin-bottom: 20px; }
-    form { display: flex; flex-direction: column; width: 300px; }
-    input { margin-bottom: 10px; padding: 8px; border-radius: 4px; border: none; }
-    button { padding: 10px; border-radius: 4px; border: none; cursor: pointer; background: #2563eb; color: #fff; }
-    .section { margin-bottom: 30px; text-align: center; }
-    .link { color: #2563eb; cursor: pointer; text-decoration: underline; }
-  </style>
+    .logo {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .logo h1 {
+        font-size: 48px;
+        margin: 0;
+        color: #fff;
+    }
+    .logo .bigode {
+        font-size: 64px;
+        color: #fff;
+        margin-top: 10px;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        align-items: center;
+    }
+    button {
+        padding: 20px 50px;
+        font-size: 22px;
+        border: none;
+        cursor: pointer;
+        background-color: #fff;
+        color: #000;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+    button:hover {
+        background-color: #ddd;
+    }
+</style>
 </head>
 <body>
 
-  <h1>Plataforma Salão</h1>
+<div class="logo">
+    <h1>Barba Zero</h1>
+    <div class="bigode">🧔‍♂️</div>
+</div>
 
-  <!-- LOGIN SALÃO -->
-  <div class="section">
-    <h2>Login do Salão</h2>
-    <form id="loginSaloes">
-      <input type="email" id="emailS" placeholder="Email" required />
-      <input type="password" id="senhaS" placeholder="Senha" required />
-      <button type="submit">Entrar</button>
-    </form>
-    <p class="link" onclick="mostrarCadastroS()">Não tem cadastro? Cadastrar salão</p>
-  </div>
-
-  <!-- LOGIN CLIENTE -->
-  <div class="section">
-    <h2>Login do Cliente</h2>
-    <form id="loginClientes">
-      <input type="email" id="emailC" placeholder="Email" required />
-      <button type="submit">Entrar</button>
-    </form>
-  </div>
-
-  <!-- CADASTRO SALÃO -->
-  <div class="section" id="cadastroS" style="display:none;">
-    <h2>Cadastro do Salão</h2>
-    <form id="formCadastroS">
-      <input type="text" id="nomeS" placeholder="Nome do Salão" required />
-      <input type="email" id="emailCadastroS" placeholder="Email" required />
-      <input type="password" id="senhaCadastroS" placeholder="Senha" required />
-      <button type="submit">Cadastrar Salão</button>
-    </form>
-  </div>
-
-<script>
-  const supabase = supabase.createClient(
-    "https://ujarxofdtmcjulqutpfd.supabase.co",
-    "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
-  );
-
-  function mostrarCadastroS() {
-    document.getElementById("cadastroS").style.display = "block";
-  }
-
-  /* ========== LOGIN SALÃO ========== */
-  document.getElementById("loginSaloes").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("emailS").value;
-    const senha = document.getElementById("senhaS").value;
-
-    const { data: userData, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: senha
-    });
-
-    if (error) return alert(error.message);
-
-    // Verificar status do plano
-    const { data: salao } = await supabase
-      .from("saloes")
-      .select("plano_ativo, plano_fim")
-      .eq("id", userData.user.id)
-      .single();
-
-    const hoje = new Date();
-    if (!salao.plano_ativo || new Date(salao.plano_fim) < hoje) {
-      // Plano inativo → redireciona para pagamento
-      window.location.href = "pagamento_plano.html";
-    } else {
-      // Plano ativo → dashboard do salão
-      window.location.href = "dashboard-salao.html";
-    }
-  });
-
-  /* ========== LOGIN CLIENTE ========== */
-  document.getElementById("loginClientes").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("emailC").value;
-
-    // Logar ou criar cliente automaticamente
-    const { data: cliente, error } = await supabase
-      .from("clientes")
-      .select("*")
-      .eq("email", email)
-      .single();
-
-    if (!cliente) {
-      await supabase.from("clientes").insert({ email });
-    }
-
-    // Redireciona para dashboard do cliente
-    window.location.href = "cliente.html";
-  });
-
-  /* ========== CADASTRO SALÃO ========== */
-  document.getElementById("formCadastroS").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const nome = document.getElementById("nomeS").value;
-    const email = document.getElementById("emailCadastroS").value;
-    const senha = document.getElementById("senhaCadastroS").value;
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: senha
-    });
-
-    if (error) return alert(error.message);
-
-    await supabase.from("saloes").insert({
-      id: data.user.id,
-      nome,
-      email,
-      plano_ativo: false
-    });
-
-    alert("Cadastro realizado! Faça login para acessar.");
-    document.getElementById("cadastroS").style.display = "none";
-  });
-</script>
+<div class="container">
+    <button onclick="window.location.href='cadastro.html'">Se Cadastrar</button>
+    <button onclick="window.location.href='login.html'">Login</button>
+</div>
 
 </body>
-  </html>
+</html>
