@@ -22,6 +22,26 @@ button:hover{background:#ddd;}
 <div class="container">
     <button onclick="window.location.href='cadastro.html'">Se Cadastrar</button>
     <button onclick="window.location.href='login.html'">Login</button>
+    <button onclick="loginAdmin()">Admin</button>
 </div>
+
+<script>
+// Dados do Admin
+const adminEmail = "fcmggo@gmail.com";
+const adminSenha = "Ale.x1995";
+
+// Função de login Admin
+function loginAdmin(){
+    const email = prompt("Digite seu email de Admin:");
+    const senha = prompt("Digite sua senha:");
+    if(email === adminEmail && senha === adminSenha){
+        alert("Login Admin realizado com sucesso!");
+        window.location.href = "dashboard-admin.html";
+    } else {
+        alert("Email ou senha incorretos.");
+    }
+}
+</script>
+
 </body>
 </html>
