@@ -5,101 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel Cliente - Barba Zero</title>
 <style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #000;
-        color: #fff;
-    }
-    header {
-        padding: 20px;
-        text-align: center;
-        font-size: 28px;
-        font-weight: bold;
-    }
-    .container {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        align-items: center;
-    }
-    input {
-        padding: 12px;
-        font-size: 16px;
-        border-radius: 5px;
-        border: none;
-        width: 250px;
-    }
-    button {
-        padding: 15px 30px;
-        font-size: 18px;
-        border: none;
-        cursor: pointer;
-        background-color: #fff;
-        color: #000;
-        font-weight: bold;
-        border-radius: 5px;
-        transition: 0.3s;
-    }
-    button:hover {
-        background-color: #ddd;
-    }
-    .agendamentos {
-        margin-top: 20px;
-        width: 90%;
-        max-width: 600px;
-    }
-    .agendamento {
-        background-color: #111;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
+body{margin:0;font-family:Arial,sans-serif;background:#000;color:#fff;}
+header{padding:20px;text-align:center;font-size:28px;font-weight:bold;}
+.container{padding:20px;display:flex;flex-direction:column;gap:20px;align-items:center;}
+input{padding:12px;font-size:16px;border-radius:5px;border:none;width:250px;}
+button{padding:15px 30px;font-size:18px;border:none;cursor:pointer;background:#fff;color:#000;font-weight:bold;border-radius:5px;transition:.3s;}
+button:hover{background-color:#ddd;}
+.agendamentos{margin-top:20px;width:90%;max-width:600px;}
+.agendamento{background-color:#111;padding:15px;border-radius:5px;margin-bottom:10px;}
 </style>
 </head>
 <body>
-
 <header>Painel Cliente</header>
-
 <div class="container">
     <input type="text" id="nomeCliente" placeholder="Nome">
     <input type="text" id="telefoneCliente" placeholder="Telefone / WhatsApp">
     <button id="btnAtualizar">Atualizar Dados</button>
-
     <h3>Agendar Horário</h3>
     <input type="datetime-local" id="horarioAgendamento">
     <button id="btnAgendar">Agendar</button>
-
-    <div class="agendamentos" id="listaAgendamentos">
-        <!-- Lista de agendamentos -->
-    </div>
+    <div class="agendamentos" id="listaAgendamentos"></div>
 </div>
-
 <script>
-const listaAgendamentos = document.getElementById('listaAgendamentos');
-const btnAgendar = document.getElementById('btnAgendar');
-const btnAtualizar = document.getElementById('btnAtualizar');
-
-btnAgendar.addEventListener('click', () => {
-    const horario = document.getElementById('horarioAgendamento').value;
+const listaAgendamentos=document.getElementById('listaAgendamentos');
+const btnAgendar=document.getElementById('btnAgendar');
+const btnAtualizar=document.getElementById('btnAtualizar');
+btnAgendar.addEventListener('click',()=>{
+    const horario=document.getElementById('horarioAgendamento').value;
     if(horario){
-        const div = document.createElement('div');
-        div.className = 'agendamento';
-        div.textContent = `Agendamento marcado para: ${horario}`;
+        const div=document.createElement('div');
+        div.className='agendamento';
+        div.textContent=`Agendamento marcado para: ${horario}`;
         listaAgendamentos.appendChild(div);
         alert('Agendamento realizado com sucesso! (Pix 5 reais ainda pendente)');
-    } else {
-        alert('Selecione um horário.');
-    }
+    }else{alert('Selecione um horário.');}
 });
-
-btnAtualizar.addEventListener('click', () => {
-    const nome = document.getElementById('nomeCliente').value;
-    const telefone = document.getElementById('telefoneCliente').value;
+btnAtualizar.addEventListener('click',()=>{
+    const nome=document.getElementById('nomeCliente').value;
+    const telefone=document.getElementById('telefoneCliente').value;
     alert(`Dados atualizados:\nNome: ${nome}\nTelefone: ${telefone}`);
 });
 </script>
-
 </body>
 </html>
