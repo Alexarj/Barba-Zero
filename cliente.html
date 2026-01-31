@@ -1,191 +1,173 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Painel do Cliente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <!-- Supabase -->
+  <meta charset="UTF-8">
+  <title>Dashboard Cliente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1, h2 {
-      text-align: center;
-    }
-
-    .card {
-      background: #020617;
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 420px;
-      margin: 20px auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 5px;
-      border: none;
-      font-size: 14px;
-    }
-
-    input, select {
-      background: #020617;
-      color: #fff;
-      border: 1px solid #334155;
-    }
-
-    button {
-      background: #22c55e;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-
-    button:disabled {
-      background: #334155;
-      cursor: not-allowed;
-    }
-
-    .alert {
-      background: #7f1d1d;
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 15px;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    .success {
-      background: #14532d;
-    }
-
-    .info {
-      background: #1e3a8a;
-    }
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
+    header { padding: 20px; background: #222; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; }
+    main { padding: 20px; }
+    input, select, button { padding: 8px; margin: 5px 0; border-radius: 4px; border: none; }
+    button { cursor: pointer; background: #2563eb; color: #fff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #444; text-align: left; }
+    .cancelar { background: #dc2626; }
+    .pago { background: #16a34a; color: #fff; padding: 5px; border-radius: 4px; }
   </style>
 </head>
-
 <body>
 
-<h1>Área do Cliente</h1>
+<header>
+  <h1>Dashboard Cliente</h1>
+  <button onclick="logout()">Sair</button>
+</header>
 
-<div class="card">
-  <h2>Seus dados</h2>
+<main>
+  <h2>Seus Dados</h2>
+  <form id="formDados">
+    <input type="text" id="nome" placeholder="Nome" required />
+    <input type="text" id="telefone" placeholder="Telefone/WhatsApp" required />
+    <button type="submit">Atualizar</button>
+  </form>
 
-  <label>Nome</label>
-  <input id="nome" placeholder="Seu nome completo" />
+  <h2>Agendar Horário</h2>
+  <form id="formAgendamento">
+    <label for="salao">Escolher Salão:</label>
+    <select id="salao" required></select>
+    <input type="datetime-local" id="horario" required />
+    <button type="submit">Agendar (R$5 adiantado)</button>
+  </form>
 
-  <label>WhatsApp</label>
-  <input id="whatsapp" placeholder="DDD + número" />
-
-  <label>Horário desejado</label>
-  <input id="horario" type="datetime-local" />
-
-</div>
-
-<div class="card">
-  <h2>Pagamento (Pix Imediato)</h2>
-
-  <div class="alert info">
-    Valor para reservar: <strong>R$ 5,00</strong><br>
-    Pix agendado não é aceito.
-  </div>
-
-  <label>Nome do pagador (Pix)</label>
-  <input id="pagador" placeholder="Nome que aparece no Pix" />
-
-  <label>Enviar comprovante</label>
-  <input id="comprovante" type="file" accept="image/*,application/pdf" />
-
-  <button onclick="enviarAgendamento()">Confirmar Agendamento</button>
-
-  <div id="msg"></div>
-</div>
+  <h2>Seus Agendamentos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Salão</th>
+        <th>Horário</th>
+        <th>Status</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaAgendamentos"></tbody>
+  </table>
+</main>
 
 <script>
-  // 🔐 CONFIGURE SEU SUPABASE AQUI
   const supabase = supabase.createClient(
-    "https://SUA_URL.supabase.co",
-    "SUA_CHAVE_PUBLICA"
+    "https://ujarxofdtmcjulqutpfd.supabase.co",
+    "sb_publishable_ZhOEQgwUX5A6kQDvm0kB1g_houcldK8"
   );
 
-  async function enviarAgendamento() {
-    const nome = document.getElementById("nome").value.trim();
-    const whatsapp = document.getElementById("whatsapp").value.trim();
-    const horario = document.getElementById("horario").value;
-    const pagador = document.getElementById("pagador").value.trim();
-    const file = document.getElementById("comprovante").files[0];
-    const msg = document.getElementById("msg");
+  let clienteId;
 
-    msg.innerHTML = "";
-
-    if (!nome || !whatsapp || !horario || !pagador || !file) {
-      msg.innerHTML = `<div class="alert">Preencha todos os campos.</div>`;
+  async function init() {
+    const user = supabase.auth.getUser();
+    const { data: userData } = await user;
+    if (!userData) {
+      window.location.href = "index.html";
       return;
     }
 
-    // ⛔ Bloqueio lógico de Pix agendado
-    if (pagador.toLowerCase().includes("agend")) {
-      msg.innerHTML = `<div class="alert">Pix agendado não é aceito.</div>`;
-      return;
+    // Verifica se cliente já existe
+    const { data: cliente } = await supabase
+      .from("clientes")
+      .select("*")
+      .eq("email", userData.user.email)
+      .single();
+
+    if (!cliente) {
+      const { data } = await supabase.from("clientes").insert({ email: userData.user.email }).select().single();
+      clienteId = data.id;
+    } else {
+      clienteId = cliente.id;
+      document.getElementById("nome").value = cliente.nome || "";
+      document.getElementById("telefone").value = cliente.telefone || "";
     }
 
-    // Upload do comprovante
-    const fileName = `pix_${Date.now()}_${file.name}`;
-
-    const { error: uploadError } = await supabase
-      .storage
-      .from("comprovantes")
-      .upload(fileName, file);
-
-    if (uploadError) {
-      msg.innerHTML = `<div class="alert">Erro ao enviar comprovante.</div>`;
-      return;
-    }
-
-    // Salva agendamento
-    const { error } = await supabase
-      .from("agendamentos")
-      .insert({
-        nome_cliente: nome,
-        whatsapp,
-        horario,
-        pagador_pix: pagador,
-        comprovante: fileName,
-        status: "pendente",
-        valor: 5
-      });
-
-    if (error) {
-      msg.innerHTML = `<div class="alert">Erro ao salvar agendamento.</div>`;
-      return;
-    }
-
-    msg.innerHTML = `
-      <div class="alert success">
-        Agendamento enviado!<br>
-        Aguardando validação do salão.
-      </div>
-    `;
+    carregarSaloes();
+    carregarAgendamentos();
   }
+
+  async function carregarSaloes() {
+    const { data: saloes } = await supabase.from("saloes").select("id, nome");
+    const select = document.getElementById("salao");
+    select.innerHTML = "";
+    saloes.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.nome;
+      select.appendChild(opt);
+    });
+  }
+
+  async function carregarAgendamentos() {
+    const { data: agendamentos } = await supabase
+      .from("agendamentos")
+      .select("id, salao_id, horario, pago, finalizado, saloes(nome)")
+      .eq("cliente_id", clienteId)
+      .order("horario", { ascending: true });
+
+    const tbody = document.getElementById("tabelaAgendamentos");
+    tbody.innerHTML = "";
+
+    agendamentos.forEach(a => {
+      const status = a.finalizado ? "Finalizado" : a.pago ? "Pago" : "Agendado";
+      const btnCancelar = !a.finalizado && (new Date(a.horario) - new Date() > 30*60*1000)
+        ? `<button class="cancelar" onclick="cancelar('${a.id}')">Cancelar</button>`
+        : "";
+      const nomeSalao = a.saloes ? a.saloes.nome : "";
+      tbody.innerHTML += `
+        <tr>
+          <td>${nomeSalao}</td>
+          <td>${new Date(a.horario).toLocaleString()}</td>
+          <td>${status}</td>
+          <td>${btnCancelar}</td>
+        </tr>
+      `;
+    });
+  }
+
+  document.getElementById("formDados").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById("nome").value;
+    const telefone = document.getElementById("telefone").value;
+
+    await supabase.from("clientes").update({ nome, telefone }).eq("id", clienteId);
+    alert("Dados atualizados!");
+  });
+
+  document.getElementById("formAgendamento").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const salaoId = document.getElementById("salao").value;
+    const horario = document.getElementById("horario").value;
+
+    await supabase.from("agendamentos").insert({
+      cliente_id: clienteId,
+      salao_id: salaoId,
+      horario,
+      pago: false,
+      finalizado: false
+    });
+
+    alert("Agendamento criado! Faça o pagamento adiantado via Pix para o salão (R$5).");
+    carregarAgendamentos();
+  });
+
+  async function cancelar(id) {
+    if (!confirm("Deseja realmente cancelar este agendamento?")) return;
+    await supabase.from("agendamentos").delete().eq("id", id);
+    carregarAgendamentos();
+  }
+
+  function logout() {
+    supabase.auth.signOut();
+    window.location.href = "index.html";
+  }
+
+  init();
 </script>
 
 </body>
