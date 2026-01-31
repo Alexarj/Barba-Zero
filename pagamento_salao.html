@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pagamento Assinatura - Barba Zero</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
+h2{margin-bottom:20px;}
+input,button{padding:15px;font-size:18px;border-radius:5px;border:none;margin:10px 0;width:250px;}
+button{background-color:#fff;color:#000;font-weight:bold;cursor:pointer;transition:0.3s;}
+button:hover{background-color:#ddd;}
+</style>
+</head>
+<body>
+<h2>Pagamento Mensal do Salão</h2>
+<p>Assinatura: R$29,90/mês</p>
+<p>Chave Pix do Admin: <strong>fcmggo@gmail.com</strong></p>
+<label>Envie o comprovante de pagamento:</label>
+<input type="file" id="comprovantePix" accept="image/*">
+<button id="btnEnviar">Enviar Comprovante</button>
+<script>
+document.getElementById('btnEnviar').addEventListener('click',()=>{
+    const file=document.getElementById('comprovantePix').files[0];
+    if(!file){alert('Selecione um arquivo de comprovante.'); return;}
+    alert('Comprovante enviado com sucesso! Aguarde até 2 horas para confirmação pelo admin.');
+});
+</script>
+</body>
+</html>
