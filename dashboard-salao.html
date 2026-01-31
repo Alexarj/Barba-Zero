@@ -23,12 +23,14 @@ button:hover{background-color:#ddd;}
 <script>
 const listaAgendamentos=document.getElementById('listaAgendamentos');
 const agendamentos=[{cliente:'João',horario:'2026-02-01 10:00',status:'pendente'},{cliente:'Maria',horario:'2026-02-01 11:00',status:'pendente'}];
+
 agendamentos.forEach(a=>{
     const div=document.createElement('div');
     div.className='agendamento';
     div.innerHTML=`<span>${a.cliente} - ${a.horario}</span><button onclick="marcarFinalizado(this)">Finalizar</button>`;
     listaAgendamentos.appendChild(div);
 });
+
 function marcarFinalizado(btn){
     btn.parentElement.querySelector('span').textContent+=' - Finalizado';
     btn.disabled=true;
