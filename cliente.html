@@ -3,198 +3,190 @@
 <head>
   <meta charset="UTF-8" />
   <title>Painel do Cliente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
+      background: #0f172a;
+      color: #e5e7eb;
+      margin: 0;
       padding: 20px;
-      max-width: 500px;
-      margin: auto;
     }
-    h2 {
+
+    h1, h2 {
       text-align: center;
-      margin-bottom: 20px;
     }
-    input, button {
+
+    .card {
+      background: #020617;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 420px;
+      margin: 20px auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    input, select, button {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 6px;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
       border: none;
+      font-size: 14px;
     }
+
+    input, select {
+      background: #020617;
+      color: #fff;
+      border: 1px solid #334155;
+    }
+
     button {
-      background: #00c853;
+      background: #22c55e;
       color: #000;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 15px;
     }
-    button.cancelar {
-      background: #ff5252;
-      color: #fff;
+
+    button:disabled {
+      background: #334155;
+      cursor: not-allowed;
     }
-    .box {
-      background: #1e1e1e;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
+
+    .alert {
+      background: #7f1d1d;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-size: 14px;
+      text-align: center;
     }
-    .status {
-      font-weight: bold;
-      margin-top: 5px;
+
+    .success {
+      background: #14532d;
     }
-    .pendente { color: #ffeb3b; }
-    .confirmado { color: #00e676; }
-    .recusado { color: #ff5252; }
+
+    .info {
+      background: #1e3a8a;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>Área do Cliente</h2>
+<h1>Área do Cliente</h1>
 
-<div class="box">
-  <input id="email" placeholder="Seu email" />
-  <button onclick="login()">Entrar</button>
+<div class="card">
+  <h2>Seus dados</h2>
+
+  <label>Nome</label>
+  <input id="nome" placeholder="Seu nome completo" />
+
+  <label>WhatsApp</label>
+  <input id="whatsapp" placeholder="DDD + número" />
+
+  <label>Horário desejado</label>
+  <input id="horario" type="datetime-local" />
+
 </div>
 
-<div id="painel" style="display:none">
+<div class="card">
+  <h2>Pagamento (Pix Imediato)</h2>
 
-  <div class="box">
-    <h3>Seus dados</h3>
-    <input id="nome" placeholder="Seu nome" />
-    <input id="whatsapp" placeholder="WhatsApp" />
-    <button onclick="salvarDados()">Salvar dados</button>
+  <div class="alert info">
+    Valor para reservar: <strong>R$ 5,00</strong><br>
+    Pix agendado não é aceito.
   </div>
 
-  <div class="box">
-    <h3>Agendar horário</h3>
-    <input type="datetime-local" id="horario" />
-    <button onclick="agendar()">Agendar (Pix R$ 5,00)</button>
-  </div>
+  <label>Nome do pagador (Pix)</label>
+  <input id="pagador" placeholder="Nome que aparece no Pix" />
 
-  <div class="box">
-    <h3>Seu agendamento</h3>
-    <div id="agendamento"></div>
-  </div>
+  <label>Enviar comprovante</label>
+  <input id="comprovante" type="file" accept="image/*,application/pdf" />
 
+  <button onclick="enviarAgendamento()">Confirmar Agendamento</button>
+
+  <div id="msg"></div>
 </div>
 
 <script>
-const supabase = window.supabase.createClient(
-  "https://SEU_PROJETO.supabase.co",
-  "SUA_CHAVE_PUBLICA"
-);
-
-let cliente = null;
-let agendamentoAtual = null;
-
-async function login() {
-  const email = document.getElementById("email").value;
-  if (!email) return alert("Informe o email");
-
-  let { data } = await supabase
-    .from("clientes")
-    .select("*")
-    .eq("email", email)
-    .single();
-
-  if (!data) {
-    const res = await supabase
-      .from("clientes")
-      .insert({ email })
-      .select()
-      .single();
-    cliente = res.data;
-  } else {
-    cliente = data;
-  }
-
-  document.getElementById("painel").style.display = "block";
-  document.getElementById("nome").value = cliente.nome || "";
-  document.getElementById("whatsapp").value = cliente.whatsapp || "";
-
-  carregarAgendamento();
-}
-
-async function salvarDados() {
-  await supabase.from("clientes").update({
-    nome: document.getElementById("nome").value,
-    whatsapp: document.getElementById("whatsapp").value
-  }).eq("id", cliente.id);
-
-  alert("Dados salvos");
-}
-
-async function agendar() {
-  const horario = document.getElementById("horario").value;
-  if (!horario) return alert("Escolha o horário");
-
-  await supabase.from("agendamentos").insert({
-    cliente_id: cliente.id,
-    horario,
-    valor: 5,
-    status: "pendente"
-  });
-
-  alert(
-    "Agendamento pendente.\n\nFaça o Pix de R$5,00 para o salão e envie o comprovante no painel do salão."
+  // 🔐 CONFIGURE SEU SUPABASE AQUI
+  const supabase = supabase.createClient(
+    "https://SUA_URL.supabase.co",
+    "SUA_CHAVE_PUBLICA"
   );
 
-  carregarAgendamento();
-}
+  async function enviarAgendamento() {
+    const nome = document.getElementById("nome").value.trim();
+    const whatsapp = document.getElementById("whatsapp").value.trim();
+    const horario = document.getElementById("horario").value;
+    const pagador = document.getElementById("pagador").value.trim();
+    const file = document.getElementById("comprovante").files[0];
+    const msg = document.getElementById("msg");
 
-async function carregarAgendamento() {
-  const { data } = await supabase
-    .from("agendamentos")
-    .select("*")
-    .eq("cliente_id", cliente.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+    msg.innerHTML = "";
 
-  if (!data) return;
+    if (!nome || !whatsapp || !horario || !pagador || !file) {
+      msg.innerHTML = `<div class="alert">Preencha todos os campos.</div>`;
+      return;
+    }
 
-  agendamentoAtual = data;
+    // ⛔ Bloqueio lógico de Pix agendado
+    if (pagador.toLowerCase().includes("agend")) {
+      msg.innerHTML = `<div class="alert">Pix agendado não é aceito.</div>`;
+      return;
+    }
 
-  let statusClass = data.status;
-  let html = `
-    <p><b>Horário:</b> ${new Date(data.horario).toLocaleString()}</p>
-    <p class="status ${statusClass}">Status: ${data.status.toUpperCase()}</p>
-  `;
+    // Upload do comprovante
+    const fileName = `pix_${Date.now()}_${file.name}`;
 
-  if (data.status === "pendente") {
-    html += `<p>Aguardando validação do Pix pelo salão</p>`;
+    const { error: uploadError } = await supabase
+      .storage
+      .from("comprovantes")
+      .upload(fileName, file);
+
+    if (uploadError) {
+      msg.innerHTML = `<div class="alert">Erro ao enviar comprovante.</div>`;
+      return;
+    }
+
+    // Salva agendamento
+    const { error } = await supabase
+      .from("agendamentos")
+      .insert({
+        nome_cliente: nome,
+        whatsapp,
+        horario,
+        pagador_pix: pagador,
+        comprovante: fileName,
+        status: "pendente",
+        valor: 5
+      });
+
+    if (error) {
+      msg.innerHTML = `<div class="alert">Erro ao salvar agendamento.</div>`;
+      return;
+    }
+
+    msg.innerHTML = `
+      <div class="alert success">
+        Agendamento enviado!<br>
+        Aguardando validação do salão.
+      </div>
+    `;
   }
-
-  if (data.status === "confirmado") {
-    html += `<button class="cancelar" onclick="cancelar()">Cancelar</button>`;
-  }
-
-  document.getElementById("agendamento").innerHTML = html;
-}
-
-async function cancelar() {
-  const horario = new Date(agendamentoAtual.horario);
-  const agora = new Date();
-
-  const diff = (horario - agora) / 60000;
-  if (diff < 30) {
-    return alert("Cancelamento permitido apenas até 30 minutos antes");
-  }
-
-  await supabase.from("agendamentos")
-    .update({ status: "cancelado" })
-    .eq("id", agendamentoAtual.id);
-
-  alert("Agendamento cancelado");
-  carregarAgendamento();
-}
 </script>
 
 </body>
-  </html>
+</html>
